@@ -115,7 +115,7 @@ export default function NewEformPage({ config }: NewEformPageProps) {
       return;
     }
 
-    const popup = window.open('/embed.html', 'efs_template', 'width=1200,height=900');
+    const popup = window.open('/embed', 'efs_template', 'width=1200,height=900');
     if (!popup) {
       alert("팝업이 차단되었습니다. 허용해주세요.");
       return;

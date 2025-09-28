@@ -3,7 +3,7 @@ import { efsClient, HttpRelayError } from '@/lib/eformsign';
 
 export async function POST() {
   try {
-    const token = await efsClient.getAccessToken();
+    const token = await efsClient().getAccessToken();
     return NextResponse.json({ access_token: token });
   } catch (error) {
     if (error instanceof HttpRelayError) {

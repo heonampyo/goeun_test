@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     console.log(`hnp document_id : ${document_id} / include_fields : ${include_fields}`);
 
   try {
-    const result = await efsClient.getDocumentDetail(document_id, include_fields);
+    const result = await efsClient().getDocumentDetail(document_id, include_fields);
       console.log(`hnp  result11 : ${JSON.stringify(result)}`);
       console.log(`hnp  result22 : ${NextResponse.json(result)}`);
     const response = NextResponse.json(result);

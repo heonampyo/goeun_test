@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   const type = req.nextUrl.searchParams.get('type') || 'document';
 
   try {
-    const { content, filename } = await efsClient.downloadFiles(document_id, type);
+    const { content, filename } = await efsClient().downloadFiles(document_id, type);
     
     const headers = new Headers();
     headers.set('Content-Disposition', `attachment; filename="${filename}"`);

@@ -188,4 +188,11 @@ class EformsignClient {
   }
 }
 
-export const efsClient = new EformsignClient();
+let _efsClient: EformsignClient | null = null;
+
+export const efsClient = () => {
+  if (!_efsClient) {
+    _efsClient = new EformsignClient();
+  }
+  return _efsClient;
+};

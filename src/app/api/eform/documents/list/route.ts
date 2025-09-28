@@ -4,7 +4,7 @@ import { efsClient, HttpRelayError } from '@/lib/eformsign';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const result = await efsClient.listDocumentsAuto(body);
+    const result = await efsClient().listDocumentsAuto(body);
     return NextResponse.json(result);
   } catch (error) {
     if (error instanceof HttpRelayError) {

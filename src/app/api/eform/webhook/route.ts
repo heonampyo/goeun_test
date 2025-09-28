@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       await webhookFileStore.set(document_id, payload);
       try {
         // 이 API 호출은 현재 결과를 사용하지 않으므로, 에러가 발생해도 무시합니다.
-        await efsClient.getDocumentDetail(document_id, true);
+        await efsClient().getDocumentDetail(document_id, true);
       } catch (e) {
         console.error(`Webhook: Failed to get document detail for ${document_id}`, e);
       }

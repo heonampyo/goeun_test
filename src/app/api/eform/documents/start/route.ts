@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const result = await efsClient.createDocumentExternal(template_id, documentBody);
+    const result = await efsClient().createDocumentExternal(template_id, documentBody);
     return NextResponse.json(result);
   } catch (error) {
     if (error instanceof HttpRelayError) {

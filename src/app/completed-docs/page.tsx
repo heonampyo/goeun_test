@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface Document {
   id: string;
@@ -16,7 +16,7 @@ export default function CompletedDocsPage() {
   const [templateId, setTemplateId] = useState('');
   const limit = 20;
 
-  const fetchDocs = async () => {
+  const fetchDocs = useCallback(async () => {
     try {
       const body: { type: string; limit: number; skip: number; title?: string; template_id?: string } = {
         type: "03",
@@ -49,11 +49,11 @@ export default function CompletedDocsPage() {
       console.error(err);
       alert('완료 문서 목록 불러오기 오류');
     }
-  };
+  }, [skip, title, templateId]);
 
   useEffect(() => {
     fetchDocs();
-  }, [skip]);
+  }, [fetchDocs]);
 
   const handleSearch = () => {
     setSkip(0);

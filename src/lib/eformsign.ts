@@ -14,7 +14,7 @@ const API_PREFIX = `${EFS_API_BASE}/v2.0/api`;
 const log = (title: string, data: object) => {
   try {
     console.log(`[EFS] ${JSON.stringify({ _: title, ...data })}`);
-  } catch (e) {
+  } catch {
     console.log(`[EFS] ${title}`, data);
   }
 };
@@ -156,7 +156,7 @@ class EformsignClient {
     const url = `${API_PREFIX}/list_document`;
     const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
     
-    const payload: Record<string, any> = {
+    const payload: Record<string, unknown> = {
         type: body.type || "03",
         limit: body.limit || 20,
         skip: body.skip || 0,

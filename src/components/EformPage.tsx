@@ -127,7 +127,7 @@ export default function EformPage() {
       if (data.type === "DOC_RESULT" && data.document_id) {
         console.log('[CRM] DOC_RESULT 수신:', data.document_id);
         setLastDocumentId(data.document_id);
-        pollWebhookData(data.document_id);
+        // pollWebhookData(data.document_id);
       }
     };
 
@@ -230,10 +230,10 @@ export default function EformPage() {
           const newUpdatedFields = new Set<string>();
           if (result.data && result.data.document && result.data.document.fields) {
             const fields = result.data.document.fields;
-            const newFormData = { ...formData };
+            const newFormData: { [key: string]: string | number } = { ...formData };
             fields.forEach((field: { id: string, value: string }) => {
               if (field.id in newFormData) {
-                (newFormData as any)[field.id] = field.value;
+                newFormData[field.id] = field.value;
                 newUpdatedFields.add(field.id);
               }
             });

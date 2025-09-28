@@ -8,19 +8,19 @@ async function readStore() {
     await fs.mkdir(path.dirname(storePath), { recursive: true });
     const data = await fs.readFile(storePath, 'utf-8');
     return JSON.parse(data);
-  } catch (error) {
+  } catch {
     // 파일이 없거나 비어있으면 초기 상태 반환
     return {};
   }
 }
 
-async function writeStore(data: any) {
+async function writeStore(data: Record<string, unknown>) {
   await fs.mkdir(path.dirname(storePath), { recursive: true });
   await fs.writeFile(storePath, JSON.stringify(data, null, 2));
 }
 
 export const webhookFileStore = {
-  async set(key: string, value: any) {
+  async set(key: string, value: unknown) {
     const store = await readStore();
     store[key] = value;
     await writeStore(store);

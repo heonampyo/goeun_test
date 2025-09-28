@@ -5,7 +5,7 @@ interface Params {
   document_id: string;
 }
 
-export async function GET(req: NextRequest, { params }: { params: Params }) {
+export async function GET(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
   const document_id = pathname.substring(pathname.lastIndexOf('/') + 1);
   console.log("DOCUMENTS GET");

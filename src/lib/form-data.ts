@@ -1,6 +1,8 @@
 export interface FormConfig {
   pageId: string;
   title: string;
+  defaultUserType: string;
+  defaultContactMethod: string;
   sections: {
     title: string;
     fields: string[];
@@ -10,6 +12,8 @@ export interface FormConfig {
 
 export const page31Config: FormConfig = {
   pageId: '3-1',
+  defaultUserType: 'corporate-ceo',
+  defaultContactMethod: 'non-face-to-face',
   title: '입력 화면(바로전송)',
   sections: [
     {
@@ -120,6 +124,8 @@ export const page31Config: FormConfig = {
 
 export const page311Config: FormConfig = {
   pageId: '3-1-1',
+  defaultUserType: 'corporate-ceo',
+  defaultContactMethod: 'non-face-to-face',
   title: '입력 화면',
   sections: [
     {
@@ -230,6 +236,8 @@ export const page311Config: FormConfig = {
 
 export const page33Config: FormConfig = {
   pageId: '3-3',
+  defaultUserType: 'individual-ceo',
+  defaultContactMethod: 'non-face-to-face',
   title: '입력 화면',
   sections: [
     {
@@ -323,6 +331,8 @@ export const page33Config: FormConfig = {
 
 export const page35Config: FormConfig = {
   pageId: '3-5',
+  defaultUserType: 'private-business-owner',
+  defaultContactMethod: 'non-face-to-face',
   title: '입력 화면',
   sections: [
     {
@@ -421,6 +431,8 @@ export const page35Config: FormConfig = {
 
 export const page37Config: FormConfig = {
   pageId: '3-7',
+  defaultUserType: 'individual-ceo',
+  defaultContactMethod: 'non-face-to-face',
   title: '입력 화면',
   sections: [
     {

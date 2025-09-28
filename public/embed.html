@@ -76,6 +76,7 @@
                 fields
               }), ALLOWED_ORIGIN);
               LOG('DOC_RESULT 전송(폴링 경유)', { document_id, template_id, fieldsCount: fields.length });
+              window.close();
             }
             return;
           }

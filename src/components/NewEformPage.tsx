@@ -50,8 +50,8 @@ const FormItem: React.FC<FormItemProps> = ({ label, id, value, type = "text", on
 export default function NewEformPage({ config }: NewEformPageProps) {
   const [updatedFields, setUpdatedFields] = useState<Set<string>>(new Set());
   const [formData, setFormData] = useState(config.initialValues);
-  const [userType, setUserType] = useState('corporate-ceo');
-  const [contactMethod, setContactMethod] = useState('non-face-to-face');
+  const [userType, setUserType] = useState(config.defaultUserType);
+  const [contactMethod, setContactMethod] = useState(config.defaultContactMethod);
   const [lastDocumentId, setLastDocumentId] = useState<string | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -93,25 +93,27 @@ export default function NewEformPage({ config }: NewEformPageProps) {
   }, [formData]);
 
   const handleStartDocument = async () => {
-    const TEMPLATE_MAP = [
-        { form: "APW", biz: "법인사업자-대표자", contact: "비대면", template_id: "6e0bfaf7b13d4f4ca8565f93ece4d49d" },
-        { form: "APW", biz: "법인사업자-대리인", contact: "비대면", template_id: "52f5ccd079d745598636176ca3edaf42" },
-        { form: "ART", biz: "개인-대표자", contact: "비대면", template_id: "0ab7e9521f834f74a4dbfe936315cc19" },
-        { form: "ART", biz: "개인-대표자", contact: "대면", template_id: "4c49689673784b75844a383a97795e02" },
-        { form: "RAM", biz: "개인사업자-대표자", contact: "비대면", template_id: "741fcdd232bc4871a29f0e89452e3fad" },
-        { form: "MSA", biz: "개인사업자-대표자", contact: "비대면", template_id: "9bac570e8ad84818b3f35be7fc30c274" },
-        { form: "APW", biz: "개인-대표자", contact: "비대면", template_id: "558bd69ab88548b4a4b043b694c7afaa" },
-      ];
+    const TEMPLATE_MAP = {
+      "APW:법인사업자-대표자:비대면": "6e0bfaf7b13d4f4ca8565f93ece4d49d",
+      "APW:법인사업자-대리인:비대면": "52f5ccd079d745598636176ca3edaf42",
+      "ART:개인-대표자:비대면": "0ab7e9521f834f74a4dbfe936315cc19",
+      "ART:개인-대표자:대면": "4c49689673784b75844a383a97795e02",
+      "RAM:개인사업자-대표자:비대면": "741fcdd232bc4871a29f0e89452e3fad",
+      "MSA:개인사업자-대표자:비대면": "9bac570e8ad84818b3f35be7fc30c274",
+      "APW:개인-대표자:비대면": "558bd69ab88548b4a4b043b694c7afaa",
+    };
 
-    const biz = userType === 'corporate-ceo' ? '법인사업자-대표자' : userType === 'corporate-agent' ? '법인사업자-대리인' : '개인-대표자';
+    const formCode = String(formData["시스템 설정 코드"]);
+    const biz = userType === 'corporate-ceo' ? '법인사업자-대표자' : userType === 'corporate-agent' ? '법인사업자-대리인' : userType === 'private-business-owner' ? '개인사업자-대표자' : '개인-대표자';
     const contact = contactMethod === 'non-face-to-face' ? '비대면' : '대면';
-    
-    const mapping = TEMPLATE_MAP.find(m => m.biz === biz && m.contact === contact);
-    if (!mapping) {
-      alert(`템플릿 매핑 실패: (${biz}/${contact})`);
+
+    const key = `${formCode}:${biz}:${contact}`;
+    const template_id = TEMPLATE_MAP[key as keyof typeof TEMPLATE_MAP];
+
+    if (!template_id) {
+      alert(`템플릿 매핑 실패: ${key}`);
       return;
     }
-    const template_id = mapping.template_id;
 
     const popup = window.open('/embed.html', 'efs_template', 'width=1200,height=900');
     if (!popup) {
@@ -133,7 +135,11 @@ export default function NewEformPage({ config }: NewEformPageProps) {
       const token = await tokenRes.json();
 
       const fields = Object.entries(formData).map(([id, value]) => ({ id, value: String(value) }));
-      const docName = `APW_대표자_${formData['고객명']}_${new Date().toISOString().slice(0, 10)}`;
+      const formCode = String(formData["시스템 설정 코드"]);
+      const biz = userType === 'corporate-ceo' ? '법인사업자-대표자' : userType === 'corporate-agent' ? '법인사업자-대리인' : userType === 'private-business-owner' ? '개인사업자-대표자' : '개인-대표자';
+      const contact = contactMethod === 'non-face-to-face' ? '비대면' : '대면';
+      const customerName = String(formData['고객명']);
+      const docName = `${formCode}_${biz}_${contact}_${customerName}_${new Date().toISOString().slice(0, 10)}`;
       
       const payload = {
         type: "OPEN_TEMPLATE",
@@ -156,7 +162,9 @@ export default function NewEformPage({ config }: NewEformPageProps) {
       };
 
       setTimeout(() => {
-        popup.postMessage(JSON.stringify(payload), window.location.origin);
+        const payloadString = JSON.stringify(payload, null, 2);
+        alert(`[Debug] Sending payload to popup:\n${payloadString}`);
+        popup.postMessage(payloadString, window.location.origin);
       }, 1000);
 
     } catch (err) {
@@ -187,6 +195,7 @@ export default function NewEformPage({ config }: NewEformPageProps) {
                 <option value="corporate-ceo">법인사업자-대표자</option>
                 <option value="corporate-agent">법인사업자-대리인</option>
                 <option value="individual-ceo">개인-대표자</option>
+                <option value="private-business-owner">개인사업자-대표자</option>
               </select>
             </div>
             <div className="flex items-center gap-2">

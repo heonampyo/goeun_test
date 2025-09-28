@@ -22,7 +22,7 @@ interface FormItemProps {
   type?: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
 }
-const FormItem: React.FC<FormItemProps & { isUpdated?: boolean }> = ({ label, id, value, type = "text", onChange, isUpdated }) => (
+const FormItem: React.FC<FormItemProps> = ({ label, id, value, type = "text", onChange }) => (
   <li className="flex items-center">
     <label htmlFor={id} className="w-32 flex-shrink-0 font-bold text-black text-sm">{label}</label>
     <input
@@ -31,14 +31,13 @@ const FormItem: React.FC<FormItemProps & { isUpdated?: boolean }> = ({ label, id
       name={id}
       value={value}
       onChange={onChange}
-      className={`flex-grow p-1.5 border border-gray-300 rounded-sm text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-black ${isUpdated ? 'bg-yellow-200' : ''}`}
+      className={`flex-grow p-1.5 border border-gray-300 rounded-sm text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-black`}
     />
   </li>
 );
 
 
 export default function EformPage() {
-  const [updatedFields, setUpdatedFields] = useState<Set<string>>(new Set());
   const [formData, setFormData] = useState({
     '견적 유형': 'ZAG1',
     '시스템 설정 코드': 'APW',
@@ -209,48 +208,6 @@ export default function EformPage() {
     }
   };
 
-  const pollWebhookData = async (documentId: string) => {
-    const MAX_POLLS = 10;
-    const POLL_INTERVAL = 2000; // 2초
-
-    for (let i = 0; i < MAX_POLLS; i++) {
-      try {
-        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
-        console.log(`[Polling] Attempt ${i + 1} for document ${documentId}`);
-        const res = await fetch(`/api/eform/documents/${documentId}/status`);
-        const result = await res.json();
-
-        if (result.ready) {
-          console.log('[Polling] Webhook data received:', result.data);
-          
-          // 1. JSON 스트링으로 alert
-          alert(JSON.stringify(result.data, null, 2));
-
-          // 2. 데이터 분석 및 화면 업데이트
-          const newUpdatedFields = new Set<string>();
-          if (result.data && result.data.document && result.data.document.fields) {
-            const fields = result.data.document.fields;
-            const newFormData: { [key: string]: string | number } = { ...formData };
-            fields.forEach((field: { id: string, value: string }) => {
-              if (field.id in newFormData) {
-                newFormData[field.id] = field.value;
-                newUpdatedFields.add(field.id);
-              }
-            });
-            setFormData(newFormData);
-          }
-          
-          // 3. 업데이트된 필드 추적
-          setUpdatedFields(newUpdatedFields);
-          
-          return;
-        }
-      } catch (error) {
-        console.error('[Polling] Error fetching webhook status:', error);
-      }
-    }
-    alert('Webhook 데이터를 가져오는데 실패했습니다.');
-  };
 
   const handleDownloadDocument = () => {
     if (!lastDocumentId) {
@@ -309,7 +266,6 @@ export default function EformPage() {
                 value={formData[field as keyof typeof formData]}
                 type={typeof formData[field as keyof typeof formData] === 'number' ? 'number' : 'text'}
                 onChange={handleInputChange}
-                isUpdated={updatedFields.has(field)}
               />
             ))}
           </FormSection>

@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { efsClient, HttpRelayError } from '@/lib/eformsign';
 
-interface Params {
-  document_id: string;
-}
-
 export async function GET(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
   const document_id = pathname.substring(pathname.lastIndexOf('/') + 1);

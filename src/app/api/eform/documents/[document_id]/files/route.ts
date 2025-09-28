@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { efsClient, HttpRelayError } from '@/lib/eformsign';
 
-interface Params {
-  document_id: string;
-}
-
-export async function GET(req: NextRequest, { params }: { params: Params }) {
-  const { document_id } = params;
+export async function GET(req: NextRequest) {
+  const pathname = req.nextUrl.pathname;
+  const document_id = pathname.split('/')[4]; // /api/eform/documents/[document_id]/files
   const type = req.nextUrl.searchParams.get('type') || 'document';
 
   try {

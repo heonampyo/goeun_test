@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { webhookFileStore } from '@/lib/webhook-file-store';
 
-export async function GET(req: NextRequest, { params }: { params: { document_id: string } }) {
-  const { document_id } = params;
+export async function GET(req: NextRequest) {
+  const pathname = req.nextUrl.pathname;
+  const document_id = pathname.split('/')[4]; // /api/eform/documents/[document_id]/status
   console.log(`[StatusAPI] Checking for document_id: ${document_id}`);
 
   const data = await webhookFileStore.get(document_id);

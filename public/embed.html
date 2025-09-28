@@ -27,8 +27,9 @@
   <iframe id="eformsign_iframe" name="eformsign_iframe"></iframe>
 
   <script>
-    // 부모가 가지고 있는 BASE_API를 재사용 (없으면 로컬 기본값)
-    const BASE_API = window.opener?.BASE_API || 'http://localhost:3000'; // 포트를 Next.js 기본 포트로 변경
+    // URL에서 base_api 파라미터 추출, 없으면 부모 창 또는 로컬 기본값 사용
+    const urlParams = new URLSearchParams(window.location.search);
+    const BASE_API = urlParams.get('base_api') || window.opener?.BASE_API || 'http://localhost:3000';
     const LOG = (...a) => { console.log('[POPUP]', ...a); }; // 필요시 꺼도 됨
     const ALLOWED_ORIGIN = window.opener ? window.opener.location.origin : window.location.origin;
 

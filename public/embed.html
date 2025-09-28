@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8" />
+  <title>eformsign 문서 작성</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script src="https://www.eformsign.com/plugins/jquery/jquery.min.js"></script>
+  <script src="https://www.eformsign.com/lib/js/efs_embedded_v2.js"></script>
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0
+    }
+
+    #eformsign_iframe {
+      width: 100%;
+      height: 100vh;
+      border: 0
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 전체창 임베딩용 iframe -->
+  <iframe id="eformsign_iframe" name="eformsign_iframe"></iframe>
+
+  <script>
+    // 부모가 가지고 있는 BASE_API를 재사용 (없으면 로컬 기본값)
+    const BASE_API = window.opener?.BASE_API || 'http://localhost:3000'; // 포트를 Next.js 기본 포트로 변경
+    const LOG = (...a) => { console.log('[POPUP]', ...a); }; // 필요시 꺼도 됨
+    const ALLOWED_ORIGIN = window.opener ? window.opener.location.origin : window.location.origin;
+
+    // 부모에 READY
+    window.addEventListener('load', () => {
+      try {
+        if (window.opener) {
+          window.opener.postMessage(JSON.stringify({ type: 'READY_TEMPLATE' }), ALLOWED_ORIGIN);
+          LOG('READY_TEMPLATE 전송');
+        }
+      } catch (e) { console.error(e); }
+    });
+
+    // 유틸
+    async function fetchJSON(url, opt) {
+      const r = await fetch(url, opt);
+      if (!r.ok) throw new Error(`HTTP ${r.status} ${await r.text()}`);
+      return r.json();
+    }
+
+    // ===== 완료 대기(폴링) =====
+    let sentOnce = false;
+    async function pollDocumentUntilComplete(document_id, template_id, { maxWaitMs = 5 * 60 * 1000, intervalMs = 2500 } = {}) {
+      const start = Date.now();
+        alert(`hnp pollDocumentUntilComplete`);
+      while (Date.now() - start < maxWaitMs) {
+        try {
+            alert(`hnp 111111`);
+          const detail = await fetchJSON(`${BASE_API}/api/eform/documents/${encodeURIComponent(document_id)}?include_fields=true`);
+            alert(`hnp 222222`);
+            //"status_type":"003","status_doc_type":"03" 이런식으로 결과값이 전달됨
+          const status = (detail?.current_status?.status_type || '').toString();
+          LOG('폴링 상태', status);
+          alert(`hnp status : ${status} / detail : ` + JSON.stringify(detail));
+
+          // 완료 코드: 03 (eformsign 완료상태)
+          if (status === '003') {
+            const fields = detail?.document?.fields || detail?.fields || [];
+            if (!sentOnce) {
+              sentOnce = true;
+              window.opener?.postMessage(JSON.stringify({
+                type: 'DOC_RESULT',
+                template_id,
+                document_id,
+                fields
+              }), ALLOWED_ORIGIN);
+              LOG('DOC_RESULT 전송(폴링 경유)', { document_id, template_id, fieldsCount: fields.length });
+              window.close();
+            }
+            return;
+          }
+        } catch (e) {
+            alert(`hnp 폴링 오류 : ${e?.message}`);
+          console.warn('폴링 오류(무시 후 재시도):', e?.message || e);
+        }
+        await new Promise(r => setTimeout(r, intervalMs));
+      }
+      console.warn('완료 폴링 타임아웃', document_id);
+    }
+
+    // 메시지 수신 → 문서 열기
+    window.addEventListener('message', (event) => {
+      if (event.origin !== ALLOWED_ORIGIN) return;
+      let data = event.data;
+      try { if (typeof data === 'string') data = JSON.parse(data); } catch { }
+      if (!data || data.type !== 'OPEN_TEMPLATE') return;
+
+      const { account, token, prefill } = data;
+      const templateId = prefill?.template_id;
+      LOG('임베딩 오픈', templateId);
+
+      const efs = new EformSignDocument();
+      const option = {
+        company: { id: account.company_id, country_code: 'kr' },
+        user: { type: '01', access_token: token.access_token },
+        mode: { type: '01', template_id: templateId },
+        layout: { lang_code: 'ko', header: true, footer: true },
+        prefill: {
+          document_name: prefill.document_name || ('문서_' + new Date().toISOString().slice(0, 10)),
+          fields: prefill.fields || []
+        },
+        // 필요 시 지정: return_fields: ['고객명','견적번호']
+      };
+
+      // 저장/오픈 성공 콜백
+      const onSuccess = (res) => {
+        // eformsign v2에서 saveSuccess 등으로 document_id가 넘어오는 경우
+          const docId = res?.document_id || res?.id;
+          alert(`hnp onSuccess docId : ${docId} / sentOnce : ${sentOnce}`);
+          if (docId && !sentOnce) {
+          // 완료 이벤트가 onAction으로 안 떨어지는 환경 대응: 폴링 시작
+          pollDocumentUntilComplete(docId, templateId).catch(console.error);
+        }
+      };
+
+      // 오류 콜백
+      const onError = (err) => {
+        console.error('[POPUP][ERROR]', err);
+        alert('오류: ' + (err?.message || err));
+      };
+
+      // 액션 콜백 (배열/객체 모두 처리 + 완료 이벤트 캐치)
+      const onAction = async (act) => {
+        try {
+          const raw = act?.data;
+          const events = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+          LOG('[ACTION:NORMALIZED]', events);
+
+          // 완료 판정
+          const isCompleteEvent = (ev) => {
+            const t = (ev?.type || ev?.action || ev?.fn || '').toString().toLowerCase();
+            const s = (ev?.status || '').toString();
+            return (
+              t.includes('complete') || t === 'completed' || s === '03'
+            );
+          };
+          const done = events.find(isCompleteEvent);
+          if (!done) return;
+
+          const merged = Object.assign({}, ...events.map(e => (e && typeof e === 'object') ? e : {}));
+          const document_id = merged.document_id || merged.id;
+          const template_id = merged.template_id || templateId;
+
+          if (!document_id) return;
+
+          // 완료 즉시 상세 조회 → 부모로 전송
+          const detail = await fetchJSON(`${BASE_API}/api/eform/documents/${encodeURIComponent(document_id)}?include_fields=true`);
+          const fields = detail?.document?.fields || detail?.fields || [];
+          if (!sentOnce) {
+            sentOnce = true;
+            window.opener?.postMessage(JSON.stringify({
+              type: 'DOC_RESULT',
+              template_id,
+              document_id,
+              fields
+            }), ALLOWED_ORIGIN);
+            LOG('DOC_RESULT 전송(onAction)', { document_id, template_id, fieldsCount: fields.length });
+          }
+        } catch (e) {
+          console.error('[POPUP] onAction error', e);
+        }
+      };
+
+      efs.document(option, 'eformsign_iframe', onSuccess, onError, onAction);
+      efs.open();
+    });
+  </script>
+</body>
+
+</html>

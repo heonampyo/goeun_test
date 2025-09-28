@@ -118,6 +118,16 @@ export default function Page() {
             background: #357ABD;
           }
 
+          .buttons .submit-w {
+            background-color: #f0f0f0;
+            color: #000;
+            border: 1px solid #ccc;
+          }
+
+          .buttons .submit-w:hover {
+            background-color: #e0e0e0;
+          }
+
           .header-controls {
             display: flex;
             align-items: center;

@@ -284,7 +284,7 @@ export default function EformPage() {
             </div>
           </div>
           <div className="flex gap-2 mt-4 md:mt-0">
-            <button type="button" onClick={handleDownloadDocument} className="px-4 py-2 text-sm bg-gray-800 text-white rounded-md hover:bg-black">완료문서다운로드</button>
+            <button type="button" onClick={handleDownloadDocument} className="px-4 py-2 text-sm bg-gray-200 text-black rounded-md hover:bg-gray-300">완료문서다운로드</button>
             <button type="button" onClick={handleStartDocument} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">전자문서 작성시작</button>
           </div>
         </div>

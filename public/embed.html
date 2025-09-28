@@ -53,14 +53,19 @@
     let sentOnce = false;
     async function pollDocumentUntilComplete(document_id, template_id, { maxWaitMs = 5 * 60 * 1000, intervalMs = 2500 } = {}) {
       const start = Date.now();
+        alert(`hnp pollDocumentUntilComplete`);
       while (Date.now() - start < maxWaitMs) {
         try {
+            alert(`hnp 111111`);
           const detail = await fetchJSON(`${BASE_API}/api/eform/documents/${encodeURIComponent(document_id)}?include_fields=true`);
-          const status = (detail?.document?.status || detail?.status || '').toString();
+            alert(`hnp 222222`);
+            //"status_type":"003","status_doc_type":"03" 이런식으로 결과값이 전달됨
+          const status = (detail?.current_status?.status_type || '').toString();
           LOG('폴링 상태', status);
+          alert(`hnp status : ${status} / detail : ` + JSON.stringify(detail));
 
           // 완료 코드: 03 (eformsign 완료상태)
-          if (status === '03') {
+          if (status === '003') {
             const fields = detail?.document?.fields || detail?.fields || [];
             if (!sentOnce) {
               sentOnce = true;
@@ -75,6 +80,7 @@
             return;
           }
         } catch (e) {
+            alert(`hnp 폴링 오류 : ${e?.message}`);
           console.warn('폴링 오류(무시 후 재시도):', e?.message || e);
         }
         await new Promise(r => setTimeout(r, intervalMs));
@@ -108,10 +114,10 @@
 
       // 저장/오픈 성공 콜백
       const onSuccess = (res) => {
-        LOG('OPEN SUCCESS', res);
         // eformsign v2에서 saveSuccess 등으로 document_id가 넘어오는 경우
-        const docId = res?.document_id || res?.id;
-        if (docId && !sentOnce) {
+          const docId = res?.document_id || res?.id;
+          alert(`hnp onSuccess docId : ${docId} / sentOnce : ${sentOnce}`);
+          if (docId && !sentOnce) {
           // 완료 이벤트가 onAction으로 안 떨어지는 환경 대응: 폴링 시작
           pollDocumentUntilComplete(docId, templateId).catch(console.error);
         }

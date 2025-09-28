@@ -16,7 +16,9 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
     headers.set('Content-Disposition', `attachment; filename="${filename}"`);
     headers.set('Content-Type', 'application/octet-stream');
 
-    return new NextResponse(content, { status: 200, headers });
+    // Buffer를 Uint8Array로 변환하여 NextResponse에 전달
+    const uint8Array = new Uint8Array(content);
+    return new NextResponse(uint8Array, { status: 200, headers });
 
   } catch (error) {
     if (error instanceof HttpRelayError) {
